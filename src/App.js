@@ -2,27 +2,32 @@ import './App.css';
 import CalcButton from './CalcButton';
 import { useState } from 'react';
 
+/*
+To greatly simplify things, the minus operation is represented with the character '<'
+The string holding the calculator expression should always start with +
+Call updateStateSpecial with the string you would like for the full expression, so that the other display values automatically update (it's an encapsulated setState)
+*/
+
 function App() {
   const [state, setState] = useState({
-    expression: "+",
+    expression: "+", // plus should always start the expression
     top_token: "",
     bottom_token: "0"
   })
 
   function getTopToken(str) {
-    return str.replace('<', '-').substring(1) || "ERROR";
+    return str.replace('<', '-').substring(1);
   }
 
   function getBottomToken(str) {
     try {
-      return str.match(/[+/<*]-*[\d.]*$/g)[0].substring(1,);
+      return str.match(/[+/<*]-*[\d.]*$/g)[0].substring(1,); // gets everything after the last math operation (+, -, x, /)
     } catch {
       return str.charAt(-1);
     }
   }
 
-  function updateStateSpecial(str) {
-    console.log(str);
+  function updateStateSpecial(str) { // encapsulated setState that determines what the two displays should show
     setState({
       ...state,
       expression: str,
@@ -35,7 +40,7 @@ function App() {
     if ('0' <= i && i <= '9') {
       updateStateSpecial(state.expression + i);
     }
-    else if (i === "AC") {
+    else if (i === "AC") { // reset state
       setState({
         ...state,
         expression: "+",
@@ -43,7 +48,7 @@ function App() {
         bottom_token: "0"
       });
     }
-    else if (['+', 'x', '/'].includes(i)) {
+    else if (['+', 'x', '/'].includes(i) && (state.expression.length !== 1)) { // change inputs like "/*" to "*", otherwise just append
       if (state.expression.charAt(-1) in ['+', '-', 'x', '/', '<']) {
         updateStateSpecial(state.expression.slice(0, -1) + i);
       } else {
@@ -51,7 +56,7 @@ function App() {
       }
     }
     else if (i === '-') {
-      if (state.expression.charAt(-1) === '<') {
+      if (state.expression.charAt(-1) === '<') { // '<' is the minus sign, '-' is the negative sign
         updateStateSpecial(state.expression + i);
       } else if (!(state.expression.charAt(-1) === '-')) {
         updateStateSpecial(state.expression + '<');
@@ -63,7 +68,8 @@ function App() {
       }
     }
     else if (i === '=') {
-      updateStateSpecial(eval(state.expression.replace('<', '-')) + "");
+      // must always start with '+'
+      updateStateSpecial("+" + Math.round(eval(state.expression.replace('<', '-').replace('x', '*')) * 100000000) / 100000000 + "");
     }
   }
 
@@ -92,7 +98,6 @@ function App() {
         <CalcButton name="0" onClick={() => handleButtonClick("0")} />
         <CalcButton name="." onClick={() => handleButtonClick(".")} />
       </div>
-
     </div>
   );
 }
